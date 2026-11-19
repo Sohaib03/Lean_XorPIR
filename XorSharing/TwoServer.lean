@@ -49,4 +49,28 @@ theorem second_share_unique_mask {w : Nat} (secret observed : BitString w) :
       _ = xorBits observed secret :=
         congrArg (fun x => xorBits x secret) h
 
+
+theorem count_eq_one_of_unique {α : Type} {p : α → Prop}
+    (h : ExistsUnique p) : ({x : α | p x} : Set α).ncard = 1 := by
+  obtain ⟨witness, hw, unique⟩ := h
+  apply Set.ncard_eq_one.mpr
+  refine ⟨witness, ?_⟩
+  ext x
+  change p x ↔ x = witness
+  constructor
+  · exact unique x
+  · intro hx
+    rw [hx]
+    exact hw
+
+theorem two_server_privacy {w : Nat} (s t observed : BitString w) :
+    ({mask : BitString w | (share s mask).1 = observed} : Set _).ncard =
+      ({mask : BitString w | (share t mask).1 = observed} : Set _).ncard ∧
+    ({mask : BitString w | (share s mask).2 = observed} : Set _).ncard =
+      ({mask : BitString w | (share t mask).2 = observed} : Set _).ncard := by
+  constructor
+  · exact (count_eq_one_of_unique (first_share_unique_mask s observed)).trans
+      (count_eq_one_of_unique (first_share_unique_mask t observed)).symm
+  · exact (count_eq_one_of_unique (second_share_unique_mask s observed)).trans
+      (count_eq_one_of_unique (second_share_unique_mask t observed)).symm
 end XorSharing
